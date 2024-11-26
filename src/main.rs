@@ -3,6 +3,7 @@ use std::{thread::sleep, time::Duration};
 use anyhow::Result;
 
 use clap::{Parser, Subcommand};
+use hex::FromHex;
 use hxdmp::hexdump;
 
 use wchisp::{
@@ -325,9 +326,9 @@ fn main() -> Result<()> {
                     log::info!("Debug mode enabled");
                 }
                 Some(ConfigCommands::Set { value }) => {
-                    // flashing.write_config(value)?;
                     log::info!("setting cfg value {}", value);
-                    unimplemented!()
+                    let config = <[u8; 12]>::from_hex(value)?;
+                    flashing.write_config(config.as_slice())?;
                 }
                 Some(ConfigCommands::Unprotect {}) => {
                     flashing.unprotect(true)?;
