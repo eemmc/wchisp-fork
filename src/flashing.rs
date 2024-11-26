@@ -281,6 +281,24 @@ impl<'a> Flashing<'a> {
         Ok(())
     }
 
+    pub fn write_config(&mut self, raw: &[u8]) -> Result<()> {
+        let read_conf = Command::read_config(CFG_MASK_RDPR_USER_DATA_WPR);
+        let resp = self.transport.transfer(read_conf)?;
+        anyhow::ensure!(resp.is_ok(), "read_config failed");
+
+        let mut config = resp.payload()[2..14].to_vec(); // 4 x u32
+        config[0..12].copy_from_slice(raw);
+
+        let write_conf = Command::write_config(CFG_MASK_RDPR_USER_DATA_WPR, config);
+        let resp = self.transport.transfer(write_conf)?;
+        anyhow::ensure!(resp.is_ok(), "write_config failed");
+
+        log::info!("Write Config Ok!");
+        self.reset()?;
+        
+        Ok(())
+	}
+
     pub fn reset_config(&mut self) -> Result<()> {
         let read_conf = Command::read_config(CFG_MASK_RDPR_USER_DATA_WPR);
         let resp = self.transport.transfer(read_conf)?;
